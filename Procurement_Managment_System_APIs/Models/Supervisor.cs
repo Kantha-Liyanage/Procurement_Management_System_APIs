@@ -11,5 +11,6 @@ namespace ProcurementManagmentSystemAPIs.Models
         public int BudgetId { get; set; }
 
         public virtual SiteBudget Budget { get; set; }
+        public virtual User UsernameNavigation { get; set; }
     }
 }

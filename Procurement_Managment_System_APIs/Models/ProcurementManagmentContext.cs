@@ -479,6 +479,12 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .HasForeignKey(d => d.BudgetId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_supervisor_site_budget");
+
+                entity.HasOne(d => d.UsernameNavigation)
+                    .WithMany(p => p.Supervisors)
+                    .HasForeignKey(d => d.Username)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_supervisor_user");
             });
 
             modelBuilder.Entity<Supplier>(entity =>

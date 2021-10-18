@@ -11,6 +11,7 @@ namespace ProcurementManagmentSystemAPIs.Models
         {
             PurchaseRequisitionItems = new HashSet<PurchaseRequisitionItem>();
             PurchaseRequisitions = new HashSet<PurchaseRequisition>();
+            Supervisors = new HashSet<Supervisor>();
         }
 
         public string Username { get; set; }
@@ -22,5 +23,6 @@ namespace ProcurementManagmentSystemAPIs.Models
         public virtual UserType UserTypeNavigation { get; set; }
         public virtual ICollection<PurchaseRequisitionItem> PurchaseRequisitionItems { get; set; }
         public virtual ICollection<PurchaseRequisition> PurchaseRequisitions { get; set; }
+        public virtual ICollection<Supervisor> Supervisors { get; set; }
     }
 }

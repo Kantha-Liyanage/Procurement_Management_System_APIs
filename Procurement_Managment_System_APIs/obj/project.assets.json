@@ -7380,9 +7380,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\ProcurementManagmentSystemAPIs.csproj",
-      "projectName": "ProcurementManagmentSystemAPIs",
-      "projectPath": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\ProcurementManagmentSystemAPIs.csproj",
+      "projectUniqueName": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\ProcurementManagementSystemAPIs.csproj",
+      "projectName": "ProcurementManagementSystemAPIs",
+      "projectPath": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\ProcurementManagementSystemAPIs.csproj",
       "packagesPath": "C:\\Users\\KanthaL\\.nuget\\packages\\",
       "outputPath": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\obj\\",
       "projectStyle": "PackageReference",
