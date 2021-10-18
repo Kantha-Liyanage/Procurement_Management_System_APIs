@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qtBkokvWFFp1VJb1SAKM+Fgz00CPOViDBUjnh+dn+3dNEeZA/8+vwoQvnwYgiox/d2qOty+aOpoSTnSMp0G+xw==",
+  "dgSpecHash": "2Fg1PrXmh8YBo1n37jtqmKIAem+WegkaZN7odmutxc2yxRzqnoEt1vUptdG6fCO52L5FfwIdog7/piq2ZOJr4Q==",
   "success": true,
-  "projectFilePath": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Managment_System_APIs\\Procurement_Managment_System_APIs\\ProcurementManagementSystemAPIs.csproj",
+  "projectFilePath": "C:\\Users\\KanthaL\\Documents\\GitHub\\Procurement_Management_System_APIs\\Procurement_Management_System_APIs\\ProcurementManagementSystemAPIs.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\KanthaL\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\KanthaL\\.nuget\\packages\\microsoft.aspnetcore.html.abstractions\\2.2.0\\microsoft.aspnetcore.html.abstractions.2.2.0.nupkg.sha512",
