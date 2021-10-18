@@ -1,0 +1,10 @@
+is_global = true
+build_property.TargetFramework = net5.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.PublishSingleFile = 
+build_property.IncludeAllContentForSelfExtract = 
+build_property._SupportedPlatformList = Android,iOS,Linux,macOS,Windows
+build_property.RootNamespace = ProcurementManagmentSystemAPIs
+build_property.ProjectDir = C:\Users\KanthaL\Documents\GitHub\Procurement_Managment_System_APIs\Procurement_Managment_System_APIs\
