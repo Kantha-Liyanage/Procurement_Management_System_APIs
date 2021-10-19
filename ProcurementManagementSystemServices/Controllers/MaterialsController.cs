@@ -1,105 +1,71 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemServices.DTOs;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MaterialsController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly ProcurementManagmentContext context;
+        private readonly IMapper mapper;
 
-        public MaterialsController(ProcurementManagmentContext context)
+        public MaterialsController(ProcurementManagmentContext context, IMapper mapper)
         {
-            _context = context;
+            this.context = context;
+            this.mapper = mapper;
         }
 
         // GET: api/Materials
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Material>>> GetMaterials()
+        [HttpGet("GetMaterialsOfCategory/{categoryId}")]
+        public ActionResult GetMaterialsOfCategory(int categoryId)
         {
-            return await _context.Materials.ToListAsync();
+            List<Material> list = this.context.Materials.Where(material => material.CategoryId == categoryId).ToList<Material>();
+            List<MaterialDTO> listDTO = new List<MaterialDTO>();
+            foreach (Material mat in list)
+            {
+                MaterialDTO dto = this.mapper.Map<MaterialDTO>(mat);
+                listDTO.Add(dto);
+            }
+
+            return Ok(listDTO);
+        }
+
+        // GET: api/Materials
+        [HttpGet("SearchMaterialsByName/{name}")]
+        public ActionResult SearchMaterialsByName(string name)
+        {
+            List<Material> list = this.context.Materials.Where(material => material.Name.Contains(name)).ToList<Material>();
+            List<MaterialDTO> listDTO = new List<MaterialDTO>();
+            foreach (Material mat in list)
+            {
+                MaterialDTO dto = this.mapper.Map<MaterialDTO>(mat);
+                listDTO.Add(dto);
+            }
+
+            return Ok(listDTO);
         }
 
         // GET: api/Materials/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Material>> GetMaterial(int id)
+        public ActionResult GetMaterial(int id)
         {
-            var material = await _context.Materials.FindAsync(id);
+            var material = this.context.Materials.Find(id);
 
             if (material == null)
             {
                 return NotFound();
             }
 
-            return material;
-        }
+            MaterialDTO dto = this.mapper.Map<MaterialDTO>(material);
 
-        // PUT: api/Materials/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMaterial(int id, Material material)
-        {
-            if (id != material.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(material).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MaterialExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Materials
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Material>> PostMaterial(Material material)
-        {
-            _context.Materials.Add(material);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMaterial", new { id = material.Id }, material);
-        }
-
-        // DELETE: api/Materials/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMaterial(int id)
-        {
-            var material = await _context.Materials.FindAsync(id);
-            if (material == null)
-            {
-                return NotFound();
-            }
-
-            _context.Materials.Remove(material);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool MaterialExists(int id)
-        {
-            return _context.Materials.Any(e => e.Id == id);
+            return Ok(dto);
         }
     }
 }

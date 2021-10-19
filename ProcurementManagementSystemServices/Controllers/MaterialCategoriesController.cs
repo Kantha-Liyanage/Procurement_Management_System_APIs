@@ -1,107 +1,40 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemServices.DTOs;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MaterialCategoriesController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly ProcurementManagmentContext context;
+        private readonly IMapper mapper;
 
-        public MaterialCategoriesController(ProcurementManagmentContext context)
+        public MaterialCategoriesController(ProcurementManagmentContext context, IMapper mapper)
         {
-            _context = context;
+            this.context = context;
+            this.mapper = mapper;
         }
 
         // GET: api/MaterialCategories
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<MaterialCategory>>> GetMaterialCategories()
+        public ActionResult GetMaterialCategories()
         {
-            return await _context.MaterialCategories.ToListAsync();
-        }
-
-        // GET: api/MaterialCategories/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<MaterialCategory>> GetMaterialCategory(int id)
-        {
-            var materialCategory = await _context.MaterialCategories.FindAsync(id);
-
-            if (materialCategory == null)
+            List<MaterialCategory> list = this.context.MaterialCategories.ToList();
+            List<MaterialCategoryDTO> listDTO = new List<MaterialCategoryDTO>();
+            foreach (MaterialCategory matcat in list)
             {
-                return NotFound();
+                MaterialCategoryDTO dto = this.mapper.Map<MaterialCategoryDTO>(matcat);
+                listDTO.Add(dto);
             }
 
-            return materialCategory;
-        }
-
-        // PUT: api/MaterialCategories/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMaterialCategory(int id, MaterialCategory materialCategory)
-        {
-            if (id != materialCategory.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(materialCategory).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MaterialCategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/MaterialCategories
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<MaterialCategory>> PostMaterialCategory(MaterialCategory materialCategory)
-        {
-            _context.MaterialCategories.Add(materialCategory);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMaterialCategory", new { id = materialCategory.Id }, materialCategory);
-        }
-
-        // DELETE: api/MaterialCategories/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMaterialCategory(int id)
-        {
-            var materialCategory = await _context.MaterialCategories.FindAsync(id);
-            if (materialCategory == null)
-            {
-                return NotFound();
-            }
-
-            _context.MaterialCategories.Remove(materialCategory);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool MaterialCategoryExists(int id)
-        {
-            return _context.MaterialCategories.Any(e => e.Id == id);
+            return Ok(listDTO);
         }
     }
 }

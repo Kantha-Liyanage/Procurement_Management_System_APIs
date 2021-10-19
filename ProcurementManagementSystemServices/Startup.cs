@@ -5,7 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using ProcurementManagementSystemServices.Providers;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs
 {
@@ -21,6 +25,43 @@ namespace ProcurementManagmentSystemAPIs
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //DTO Mapper
+            services.AddAutoMapper(typeof(Startup));
+
+            //Auth
+            var tokenKey = Configuration.GetValue<string>("TokenKey");
+            var key = Encoding.ASCII.GetBytes(tokenKey);
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
+            services.AddSingleton<IJWTAuthenticationManager>(new JWTAuthenticationManager(tokenKey));
+
+            //Authorizaion
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("OnlySiteSupervisor",
+                     policy => policy.RequireRole("SITE_SUPERVISOR"));
+                options.AddPolicy("OnlyProcurementOfficer",
+                     policy => policy.RequireRole("PROCUREMENT_OFFICER"));
+                options.AddPolicy("OnlyFinanceOfficer",
+                     policy => policy.RequireRole("FINANCE_OFFICER"));
+                options.AddPolicy("OnlyAdmin",
+                     policy => policy.RequireRole("ADMIN"));
+            });
 
             //DB Context injection
             string dbCon = Configuration.GetConnectionString("MySQLConnection");
@@ -50,6 +91,7 @@ namespace ProcurementManagmentSystemAPIs
 
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

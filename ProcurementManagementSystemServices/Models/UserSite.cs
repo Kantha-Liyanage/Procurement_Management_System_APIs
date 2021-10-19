@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace ProcurementManagmentSystemAPIs.Models
+namespace ProcurementManagementSystemServices.Models
 {
-    public partial class Supervisor
+    public partial class UserSite
     {
         public string Username { get; set; }
-        public int BudgetId { get; set; }
+        public int Site { get; set; }
 
-        public virtual SiteBudget Budget { get; set; }
+        public virtual Site SiteNavigation { get; set; }
         public virtual User UsernameNavigation { get; set; }
     }
 }

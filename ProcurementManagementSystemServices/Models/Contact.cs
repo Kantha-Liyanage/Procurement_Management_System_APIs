@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace ProcurementManagmentSystemAPIs.Models
+namespace ProcurementManagementSystemServices.Models
 {
     public partial class Contact
     {

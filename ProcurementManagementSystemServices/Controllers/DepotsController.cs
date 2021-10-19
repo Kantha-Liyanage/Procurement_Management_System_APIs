@@ -1,107 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemServices.DTOs;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class DepotsController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly ProcurementManagmentContext context;
+        private readonly IMapper mapper;
 
-        public DepotsController(ProcurementManagmentContext context)
+        public DepotsController(ProcurementManagmentContext context, IMapper mapper)
         {
-            _context = context;
+            this.context = context;
+            this.mapper = mapper;
         }
 
         // GET: api/Depots
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Depot>>> GetDepots()
+        [HttpGet("GetDeportsOf/{supplierId}")]
+        public ActionResult GetDepots(int supplierId)
         {
-            return await _context.Depots.ToListAsync();
-        }
-
-        // GET: api/Depots/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Depot>> GetDepot(int id)
-        {
-            var depot = await _context.Depots.FindAsync(id);
-
-            if (depot == null)
-            {
-                return NotFound();
+            List<Depot> list = this.context.Depots.Where(deport => deport.SupplierId == supplierId).ToList<Depot>();
+            List<DepotDTO> listDTO = new List<DepotDTO>();
+            foreach (Depot depot in list) {
+                DepotDTO dto = this.mapper.Map<DepotDTO>(depot);
+                listDTO.Add(dto);
             }
 
-            return depot;
-        }
-
-        // PUT: api/Depots/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutDepot(int id, Depot depot)
-        {
-            if (id != depot.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(depot).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!DepotExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Depots
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Depot>> PostDepot(Depot depot)
-        {
-            _context.Depots.Add(depot);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetDepot", new { id = depot.Id }, depot);
-        }
-
-        // DELETE: api/Depots/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteDepot(int id)
-        {
-            var depot = await _context.Depots.FindAsync(id);
-            if (depot == null)
-            {
-                return NotFound();
-            }
-
-            _context.Depots.Remove(depot);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool DepotExists(int id)
-        {
-            return _context.Depots.Any(e => e.Id == id);
+            return Ok(listDTO); 
         }
     }
 }

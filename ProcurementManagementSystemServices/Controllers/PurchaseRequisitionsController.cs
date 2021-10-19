@@ -1,107 +1,151 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemServices.DTOs;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PurchaseRequisitionsController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly ProcurementManagmentContext context;
+        private readonly IMapper mapper;
 
-        public PurchaseRequisitionsController(ProcurementManagmentContext context)
+        public PurchaseRequisitionsController(ProcurementManagmentContext context, IMapper mapper)
         {
-            _context = context;
+            this.context = context;
+            this.mapper = mapper;
         }
 
-        // GET: api/PurchaseRequisitions
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PurchaseRequisition>>> GetPurchaseRequisitions()
+        [HttpGet("GetPurchaseRequisitions")]
+        public ActionResult GetPurchaseRequisitionsOf()
         {
-            return await _context.PurchaseRequisitions.ToListAsync();
+            string loggedOnUser = User.Identity.Name;
+            List<PurchaseRequisition> list = this.context.PurchaseRequisitions.Where(pr => pr.CreatedBy == loggedOnUser).ToList<PurchaseRequisition>();
+            List<PurchaseRequisitionDTO> listDTO = new List<PurchaseRequisitionDTO>();
+            foreach (PurchaseRequisition pr in list)
+            {
+                PurchaseRequisitionDTO dto = this.mapper.Map<PurchaseRequisitionDTO>(pr);
+                listDTO.Add(dto);
+            }
+
+            return Ok(listDTO);
         }
 
-        // GET: api/PurchaseRequisitions/5
+        [HttpGet("GetOpenPurchaseRequisitions")]
+        public ActionResult GetOpenPurchaseRequisitionsOf()
+        {
+            string loggedOnUser = User.Identity.Name;
+            List<PurchaseRequisition> list = this.context.PurchaseRequisitions.Where(pr => (pr.CreatedBy == loggedOnUser && pr.IsOpen == 1)).ToList<PurchaseRequisition>();
+            List<PurchaseRequisitionDTO> listDTO = new List<PurchaseRequisitionDTO>();
+            foreach (PurchaseRequisition pr in list)
+            {
+                PurchaseRequisitionDTO dto = this.mapper.Map<PurchaseRequisitionDTO>(pr);
+                listDTO.Add(dto);
+            }
+
+            return Ok(listDTO);
+        }
+
         [HttpGet("{id}")]
-        public async Task<ActionResult<PurchaseRequisition>> GetPurchaseRequisition(int id)
+        public ActionResult GetPurchaseRequisition(int id)
         {
-            var purchaseRequisition = await _context.PurchaseRequisitions.FindAsync(id);
-
-            if (purchaseRequisition == null)
+            string loggedOnUser = User.Identity.Name;
+            PurchaseRequisition header = this.context.PurchaseRequisitions.Where( (pr => pr.Id == id && pr.CreatedBy == loggedOnUser) ).First();
+            if (header == null)
             {
                 return NotFound();
             }
+            List<PurchaseRequisitionItem> items = this.context.PurchaseRequisitionItems.Where( item => item.PurchaseRequisitionId == header.Id).ToList<PurchaseRequisitionItem>();
 
-            return purchaseRequisition;
+            PurchaseRequisitionDTO headerDTO = this.mapper.Map<PurchaseRequisitionDTO>(header);
+            foreach (PurchaseRequisitionItem item in items) {
+                PurchaseRequisitionItemDTO dto = this.mapper.Map<PurchaseRequisitionItemDTO>(item);
+                headerDTO.items.Add(dto);
+            }
+
+            return Ok(headerDTO);
         }
 
-        // PUT: api/PurchaseRequisitions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutPurchaseRequisition(int id, PurchaseRequisition purchaseRequisition)
-        {
-            if (id != purchaseRequisition.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(purchaseRequisition).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PurchaseRequisitionExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/PurchaseRequisitions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<PurchaseRequisition>> PostPurchaseRequisition(PurchaseRequisition purchaseRequisition)
+        public ActionResult PostPurchaseRequisition(PurchaseRequisitionDTO purchaseRequisitionDTO)
         {
-            _context.PurchaseRequisitions.Add(purchaseRequisition);
-            await _context.SaveChangesAsync();
+            PurchaseRequisition purchaseRequisition = this.mapper.Map<PurchaseRequisition>(purchaseRequisitionDTO);
+            foreach (PurchaseRequisitionItemDTO item in purchaseRequisitionDTO.items) {
+                PurchaseRequisitionItem purchaseRequisitionItem = this.mapper.Map<PurchaseRequisitionItem>(item);
+                purchaseRequisition.PurchaseRequisitionItems.Add(purchaseRequisitionItem);
+            }
+
+            //Header
+            this.context.PurchaseRequisitions.Add(purchaseRequisition);
+            if (this.context.SaveChanges() > 0)
+            {
+                //Items
+                foreach (PurchaseRequisitionItem item in purchaseRequisition.PurchaseRequisitionItems) {
+                    this.context.PurchaseRequisitionItems.Add(item);
+                }
+                this.context.SaveChanges();
+            }
 
             return CreatedAtAction("GetPurchaseRequisition", new { id = purchaseRequisition.Id }, purchaseRequisition);
         }
 
-        // DELETE: api/PurchaseRequisitions/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeletePurchaseRequisition(int id)
+        public ActionResult DeletePurchaseRequisition(int id)
         {
-            var purchaseRequisition = await _context.PurchaseRequisitions.FindAsync(id);
+            string loggedOnUser = User.Identity.Name;
+            PurchaseRequisition purchaseRequisition = this.context.PurchaseRequisitions.Where( pr => pr.Id == id && pr.CreatedBy == loggedOnUser).First();
             if (purchaseRequisition == null)
             {
                 return NotFound();
             }
 
-            _context.PurchaseRequisitions.Remove(purchaseRequisition);
-            await _context.SaveChangesAsync();
+            this.context.PurchaseRequisitions.Remove(purchaseRequisition);
+            this.context.SaveChanges();
 
+            return NoContent();
+        }
+
+        [HttpPut("{id}")]
+        public ActionResult PutPurchaseRequisition(int id, PurchaseRequisitionDTO purchaseRequisitionDTO)
+        {
+            if (id != purchaseRequisitionDTO.Id)
+            {
+                return BadRequest();
+            }
+
+            if (!PurchaseRequisitionExists(id))
+            {
+                return NotFound();
+            }
+
+            PurchaseRequisition purchaseRequisition = this.mapper.Map<PurchaseRequisition>(purchaseRequisitionDTO);
+            foreach (PurchaseRequisitionItemDTO item in purchaseRequisitionDTO.items)
+            {
+                PurchaseRequisitionItem purchaseRequisitionItem = this.mapper.Map<PurchaseRequisitionItem>(item);
+                purchaseRequisition.PurchaseRequisitionItems.Add(purchaseRequisitionItem);
+            }
+
+            //Header
+            this.context.Entry(purchaseRequisition).State = EntityState.Modified;
+            //Items
+            foreach (PurchaseRequisitionItem item in purchaseRequisition.PurchaseRequisitionItems) {
+                this.context.Entry(item).State = EntityState.Modified;
+            }
+
+            this.context.SaveChanges();
             return NoContent();
         }
 
         private bool PurchaseRequisitionExists(int id)
         {
-            return _context.PurchaseRequisitions.Any(e => e.Id == id);
+            return this.context.PurchaseRequisitions.Any(e => e.Id == id);
         }
     }
 }

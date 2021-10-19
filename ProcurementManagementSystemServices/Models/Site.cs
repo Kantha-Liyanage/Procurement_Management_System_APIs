@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 #nullable disable
 
-namespace ProcurementManagmentSystemAPIs.Models
+namespace ProcurementManagementSystemServices.Models
 {
     public partial class Site
     {
@@ -11,6 +11,7 @@ namespace ProcurementManagmentSystemAPIs.Models
         {
             PurchaseRequisitions = new HashSet<PurchaseRequisition>();
             SiteBudgets = new HashSet<SiteBudget>();
+            UserSites = new HashSet<UserSite>();
         }
 
         public int Id { get; set; }
@@ -22,5 +23,6 @@ namespace ProcurementManagmentSystemAPIs.Models
         public virtual Contact Contact { get; set; }
         public virtual ICollection<PurchaseRequisition> PurchaseRequisitions { get; set; }
         public virtual ICollection<SiteBudget> SiteBudgets { get; set; }
+        public virtual ICollection<UserSite> UserSites { get; set; }
     }
 }

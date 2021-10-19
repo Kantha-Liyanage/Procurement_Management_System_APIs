@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using ProcurementManagementSystemData.Models;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemData.DTO;
+using ProcurementManagementSystemServices.Models;
+using ProcurementManagementSystemServices.Providers;
 
 namespace ProcurementManagementSystemData.Controllers
 {
@@ -8,25 +9,33 @@ namespace ProcurementManagementSystemData.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly IJWTAuthenticationManager jWTAuthenticationManager;
+        private readonly ProcurementManagmentContext context;
 
-        public AuthController(ProcurementManagmentContext context)
+        public AuthController(IJWTAuthenticationManager jWTAuthenticationManager, ProcurementManagmentContext context)
         {
-            _context = context;
+            this.jWTAuthenticationManager = jWTAuthenticationManager;
+            this.context = context;
         }
 
         // GET: api/Addresses
         [HttpGet("Authenticate")]
         public ActionResult Authenticate(string username, string password)
         {
-            User user = _context.Users.Find(username);
+            User user = this.context.Users.Find(username);
             if (user.PasswordHash.Equals(password))
             {
+                //JWT Payload
                 AuthResult authResult = new AuthResult();
                 authResult.Username = user.Username;
                 authResult.FirstName = user.FirstName;
                 authResult.LastName = user.LastName;
-                authResult.Token = "ABC123";
+
+                //Role
+                UserType userType = this.context.UserTypes.Find(user.UserType);
+
+                //Token
+                authResult.Token = jWTAuthenticationManager.Authenticate(user.Username, userType.Name);
 
                 return Ok(authResult);
             }

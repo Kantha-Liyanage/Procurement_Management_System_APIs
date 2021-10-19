@@ -1,105 +1,39 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using ProcurementManagmentSystemAPIs.Models;
+using ProcurementManagementSystemServices.DTOs;
+using ProcurementManagementSystemServices.Models;
 
 namespace ProcurementManagmentSystemAPIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UnitOfMeasuresController : ControllerBase
     {
-        private readonly ProcurementManagmentContext _context;
+        private readonly ProcurementManagmentContext context;
+        private readonly IMapper mapper;
 
-        public UnitOfMeasuresController(ProcurementManagmentContext context)
+        public UnitOfMeasuresController(ProcurementManagmentContext context, IMapper mapper)
         {
-            _context = context;
-        }
-
-        // GET: api/UnitOfMeasures
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UnitOfMeasure>>> GetUnitOfMeasures()
-        {
-            return await _context.UnitOfMeasures.ToListAsync();
+            this.context = context;
+            this.mapper = mapper;
         }
 
         // GET: api/UnitOfMeasures/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<UnitOfMeasure>> GetUnitOfMeasure(int id)
+        public ActionResult GetUnitOfMeasure(int id)
         {
-            var unitOfMeasure = await _context.UnitOfMeasures.FindAsync(id);
+            var unitOfMeasure = this.context.UnitOfMeasures.Find(id);
 
             if (unitOfMeasure == null)
             {
                 return NotFound();
             }
 
-            return unitOfMeasure;
-        }
+            UnitOfMeasureDTO dto = this.mapper.Map<UnitOfMeasureDTO>(unitOfMeasure);
 
-        // PUT: api/UnitOfMeasures/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUnitOfMeasure(int id, UnitOfMeasure unitOfMeasure)
-        {
-            if (id != unitOfMeasure.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(unitOfMeasure).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UnitOfMeasureExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/UnitOfMeasures
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<UnitOfMeasure>> PostUnitOfMeasure(UnitOfMeasure unitOfMeasure)
-        {
-            _context.UnitOfMeasures.Add(unitOfMeasure);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUnitOfMeasure", new { id = unitOfMeasure.Id }, unitOfMeasure);
-        }
-
-        // DELETE: api/UnitOfMeasures/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUnitOfMeasure(int id)
-        {
-            var unitOfMeasure = await _context.UnitOfMeasures.FindAsync(id);
-            if (unitOfMeasure == null)
-            {
-                return NotFound();
-            }
-
-            _context.UnitOfMeasures.Remove(unitOfMeasure);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool UnitOfMeasureExists(int id)
-        {
-            return _context.UnitOfMeasures.Any(e => e.Id == id);
+            return Ok(dto);
         }
     }
 }

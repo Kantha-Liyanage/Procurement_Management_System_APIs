@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 #nullable disable
 
-namespace ProcurementManagmentSystemAPIs.Models
+namespace ProcurementManagementSystemServices.Models
 {
     public partial class ProcurementManagmentContext : DbContext
     {
@@ -28,10 +28,10 @@ namespace ProcurementManagmentSystemAPIs.Models
         public virtual DbSet<PurchaseRequisitionStatus> PurchaseRequisitionStatuses { get; set; }
         public virtual DbSet<Site> Sites { get; set; }
         public virtual DbSet<SiteBudget> SiteBudgets { get; set; }
-        public virtual DbSet<Supervisor> Supervisors { get; set; }
         public virtual DbSet<Supplier> Suppliers { get; set; }
         public virtual DbSet<UnitOfMeasure> UnitOfMeasures { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<UserSite> UserSites { get; set; }
         public virtual DbSet<UserType> UserTypes { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -282,6 +282,10 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .HasColumnType("date")
                     .HasColumnName("created_date");
 
+                entity.Property(e => e.IsOpen)
+                    .HasColumnType("tinyint(4)")
+                    .HasColumnName("is_open");
+
                 entity.Property(e => e.Remarks)
                     .HasColumnType("text")
                     .HasColumnName("remarks");
@@ -313,8 +317,6 @@ namespace ProcurementManagmentSystemAPIs.Models
 
                 entity.HasIndex(e => e.Status, "FK_purchase_requisition_item_purchase_requisition_status");
 
-                entity.HasIndex(e => e.CreatedBy, "FK_purchase_requisition_item_user");
-
                 entity.Property(e => e.PurchaseRequisitionId)
                     .HasColumnType("int(11)")
                     .HasColumnName("purchase_requisition_id");
@@ -323,9 +325,7 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .HasColumnType("int(11)")
                     .HasColumnName("item_id");
 
-                entity.Property(e => e.CreatedBy)
-                    .HasMaxLength(300)
-                    .HasColumnName("created_by");
+                entity.Property(e => e.ApprovedQuantity).HasColumnName("approved_quantity");
 
                 entity.Property(e => e.CreatedDate)
                     .HasColumnType("date")
@@ -335,8 +335,6 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .HasColumnType("int(11)")
                     .HasColumnName("material_id");
 
-                entity.Property(e => e.Quantity).HasColumnName("quantity");
-
                 entity.Property(e => e.Remarks)
                     .HasColumnType("text")
                     .HasColumnName("remarks");
@@ -345,14 +343,11 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .HasColumnType("date")
                     .HasColumnName("required_date");
 
+                entity.Property(e => e.RequiredQuantity).HasColumnName("required_quantity");
+
                 entity.Property(e => e.Status)
                     .HasColumnType("int(11)")
                     .HasColumnName("status");
-
-                entity.HasOne(d => d.CreatedByNavigation)
-                    .WithMany(p => p.PurchaseRequisitionItems)
-                    .HasForeignKey(d => d.CreatedBy)
-                    .HasConstraintName("FK_purchase_requisition_item_user");
 
                 entity.HasOne(d => d.Material)
                     .WithMany(p => p.PurchaseRequisitionItems)
@@ -425,66 +420,46 @@ namespace ProcurementManagmentSystemAPIs.Models
 
             modelBuilder.Entity<SiteBudget>(entity =>
             {
+                entity.HasKey(e => new { e.SiteId, e.MaterialCategoryId })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
                 entity.ToTable("site_budget");
 
                 entity.HasIndex(e => e.MaterialCategoryId, "FK_site_budget_material_category");
 
-                entity.HasIndex(e => e.SiteId, "FK_site_budget_site");
-
-                entity.Property(e => e.Id)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("id");
-
-                entity.Property(e => e.Amount).HasColumnName("amount");
-
-                entity.Property(e => e.MaterialCategoryId)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("material_category_id");
+                entity.HasIndex(e => e.Supervisor, "FK_site_budget_user");
 
                 entity.Property(e => e.SiteId)
                     .HasColumnType("int(11)")
                     .HasColumnName("site_id");
 
+                entity.Property(e => e.MaterialCategoryId)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("material_category_id");
+
+                entity.Property(e => e.Amount).HasColumnName("amount");
+
+                entity.Property(e => e.Supervisor)
+                    .HasMaxLength(300)
+                    .HasColumnName("supervisor");
+
                 entity.HasOne(d => d.MaterialCategory)
                     .WithMany(p => p.SiteBudgets)
                     .HasForeignKey(d => d.MaterialCategoryId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_site_budget_material_category");
 
                 entity.HasOne(d => d.Site)
                     .WithMany(p => p.SiteBudgets)
                     .HasForeignKey(d => d.SiteId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_site_budget_site");
-            });
 
-            modelBuilder.Entity<Supervisor>(entity =>
-            {
-                entity.HasKey(e => new { e.Username, e.BudgetId })
-                    .HasName("PRIMARY")
-                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
-
-                entity.ToTable("supervisor");
-
-                entity.HasIndex(e => e.BudgetId, "FK_supervisor_site_budget");
-
-                entity.Property(e => e.Username)
-                    .HasMaxLength(300)
-                    .HasColumnName("username");
-
-                entity.Property(e => e.BudgetId)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("budget_id");
-
-                entity.HasOne(d => d.Budget)
-                    .WithMany(p => p.Supervisors)
-                    .HasForeignKey(d => d.BudgetId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_supervisor_site_budget");
-
-                entity.HasOne(d => d.UsernameNavigation)
-                    .WithMany(p => p.Supervisors)
-                    .HasForeignKey(d => d.Username)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_supervisor_user");
+                entity.HasOne(d => d.SupervisorNavigation)
+                    .WithMany(p => p.SiteBudgets)
+                    .HasForeignKey(d => d.Supervisor)
+                    .HasConstraintName("FK_site_budget_user");
             });
 
             modelBuilder.Entity<Supplier>(entity =>
@@ -570,6 +545,37 @@ namespace ProcurementManagmentSystemAPIs.Models
                     .WithMany(p => p.Users)
                     .HasForeignKey(d => d.UserType)
                     .HasConstraintName("FK_user_user_type");
+            });
+
+            modelBuilder.Entity<UserSite>(entity =>
+            {
+                entity.HasKey(e => new { e.Username, e.Site })
+                    .HasName("PRIMARY")
+                    .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
+
+                entity.ToTable("user_site");
+
+                entity.HasIndex(e => e.Site, "FK_user_site_site");
+
+                entity.Property(e => e.Username)
+                    .HasMaxLength(300)
+                    .HasColumnName("username");
+
+                entity.Property(e => e.Site)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("site");
+
+                entity.HasOne(d => d.SiteNavigation)
+                    .WithMany(p => p.UserSites)
+                    .HasForeignKey(d => d.Site)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_user_site_site");
+
+                entity.HasOne(d => d.UsernameNavigation)
+                    .WithMany(p => p.UserSites)
+                    .HasForeignKey(d => d.Username)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_user_site_user");
             });
 
             modelBuilder.Entity<UserType>(entity =>
