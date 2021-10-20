@@ -138,3 +138,6 @@ C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\Procure
 C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\bin\Debug\net5.0\AutoMapper.dll
 C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\bin\Debug\net5.0\AutoMapper.Extensions.Microsoft.DependencyInjection.dll
 C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\obj\Debug\net5.0\ProcurementManagementSystemServices.csproj.AssemblyReference.cache
+C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\bin\Debug\net5.0\System.Net.Http.Formatting.dll
+C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\bin\Debug\net5.0\System.Web.Http.dll
+C:\Users\KanthaL\Documents\GitHub\procurement-management system-services\ProcurementManagementSystemServices\bin\Debug\net5.0\Newtonsoft.Json.Bson.dll

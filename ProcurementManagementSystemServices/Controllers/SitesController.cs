@@ -32,6 +32,9 @@ namespace ProcurementManagmentSystemAPIs.Controllers
             foreach (UserSite us in sites)
             {
                 UserSiteDTO dto = this.mapper.Map<UserSiteDTO>(us);
+                Site site = this.context.Sites.Find(us.Site);
+                dto.Name = site.Name;
+
                 listDTO.Add(dto);
             }
 
@@ -64,9 +67,22 @@ namespace ProcurementManagmentSystemAPIs.Controllers
                 return NotFound();
             }
 
-            SiteDTO dto = this.mapper.Map<SiteDTO>(site);
+            SiteDTO siteDTO = this.mapper.Map<SiteDTO>(site);
 
-            return Ok(dto);
+            var address = this.context.Addresses.Find(siteDTO.AddressId);
+            AddressDTO addressDTO = this.mapper.Map<AddressDTO>(address);
+
+            var country = this.context.Countries.Find(address.Country);
+            CountryDTO countryDTO = this.mapper.Map<CountryDTO>(country);
+            addressDTO.CountryName = countryDTO.Name;
+
+            siteDTO.Address = addressDTO;
+
+            var contact = this.context.Contacts.Find(id);
+            ContactDTO contactDTO = this.mapper.Map<ContactDTO>(contact);
+            siteDTO.Contact = contactDTO;
+
+            return Ok(siteDTO);
         }
     }
 }

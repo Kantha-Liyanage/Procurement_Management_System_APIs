@@ -9,5 +9,6 @@ namespace ProcurementManagementSystemServices.DTOs
     {
         public string Username { get; set; }
         public int Site { get; set; }
+        public string Name { get; set; }
     }
 }

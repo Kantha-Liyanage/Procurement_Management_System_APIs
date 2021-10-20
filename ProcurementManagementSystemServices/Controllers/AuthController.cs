@@ -23,6 +23,10 @@ namespace ProcurementManagementSystemData.Controllers
         public ActionResult Authenticate(string username, string password)
         {
             User user = this.context.Users.Find(username);
+            if (user == null) {
+                return NotFound();
+            }
+
             if (user.PasswordHash.Equals(password))
             {
                 //JWT Payload

@@ -25,6 +25,14 @@ namespace ProcurementManagmentSystemAPIs
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            //CORS
+            services.AddCors(o => o.AddPolicy("AllowDevEnv", builder =>
+            {
+                builder.AllowAnyOrigin()
+                       .AllowAnyMethod()
+                       .AllowAnyHeader();
+            }));
+
             //DTO Mapper
             services.AddAutoMapper(typeof(Startup));
 
@@ -82,6 +90,8 @@ namespace ProcurementManagmentSystemAPIs
         {
             if (env.IsDevelopment())
             {
+                app.UseCors("AllowDevEnv");
+
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProcurementManagmentSystemData v1"));
