@@ -412,46 +412,35 @@ namespace ProcurementManagementSystemServices.Models
 
             modelBuilder.Entity<SiteBudget>(entity =>
             {
-                entity.HasKey(e => new { e.SiteId, e.MaterialCategoryId })
+                entity.HasKey(e => new { e.SiteId, e.CostApprover })
                     .HasName("PRIMARY")
                     .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
                 entity.ToTable("site_budget");
 
-                entity.HasIndex(e => e.MaterialCategoryId, "FK_site_budget_material_category");
-
-                entity.HasIndex(e => e.Supervisor, "FK_site_budget_user");
+                entity.HasIndex(e => e.CostApprover, "FK_site_budget_user");
 
                 entity.Property(e => e.SiteId)
                     .HasColumnType("int(11)")
                     .HasColumnName("site_id");
 
-                entity.Property(e => e.MaterialCategoryId)
-                    .HasColumnType("int(11)")
-                    .HasColumnName("material_category_id");
+                entity.Property(e => e.CostApprover)
+                    .HasMaxLength(300)
+                    .HasColumnName("cost_approver");
 
                 entity.Property(e => e.Amount).HasColumnName("amount");
 
-                entity.Property(e => e.Supervisor)
-                    .HasMaxLength(300)
-                    .HasColumnName("supervisor");
-
-                entity.HasOne(d => d.MaterialCategory)
+                entity.HasOne(d => d.CostApproverNavigation)
                     .WithMany(p => p.SiteBudgets)
-                    .HasForeignKey(d => d.MaterialCategoryId)
+                    .HasForeignKey(d => d.CostApprover)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_site_budget_material_category");
+                    .HasConstraintName("FK_site_budget_user");
 
                 entity.HasOne(d => d.Site)
                     .WithMany(p => p.SiteBudgets)
                     .HasForeignKey(d => d.SiteId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_site_budget_site");
-
-                entity.HasOne(d => d.SupervisorNavigation)
-                    .WithMany(p => p.SiteBudgets)
-                    .HasForeignKey(d => d.Supervisor)
-                    .HasConstraintName("FK_site_budget_user");
             });
 
             modelBuilder.Entity<Supplier>(entity =>

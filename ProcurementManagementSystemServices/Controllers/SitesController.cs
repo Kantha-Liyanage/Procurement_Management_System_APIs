@@ -41,21 +41,6 @@ namespace ProcurementManagmentSystemAPIs.Controllers
             return Ok(listDTO);
         }
 
-        [HttpGet("GetSiteBudget")]
-        public ActionResult GetSiteBudgetOf()
-        {
-            string loggedOnUser = User.Identity.Name;
-            List<SiteBudget> budgets = this.context.SiteBudgets.Where(site => site.Supervisor == loggedOnUser).ToList<SiteBudget>();
-            List<SiteBudgetDTO> listDTO = new List<SiteBudgetDTO>();
-            foreach (SiteBudget sb in budgets)
-            {
-                SiteBudgetDTO dto = this.mapper.Map<SiteBudgetDTO>(sb);
-                listDTO.Add(dto);
-            }
-
-            return Ok(listDTO);
-        }
-
         // GET: api/Sites/5
         [HttpGet("{id}")]
         public ActionResult GetSite(int id)

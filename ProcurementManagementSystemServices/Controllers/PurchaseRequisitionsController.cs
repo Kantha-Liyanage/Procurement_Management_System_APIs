@@ -4,6 +4,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ProcurementManagementSystemServices.Business;
 using ProcurementManagementSystemServices.DTOs;
 using ProcurementManagementSystemServices.Models;
 
@@ -141,6 +142,13 @@ namespace ProcurementManagmentSystemAPIs.Controllers
 
             string loggedOnUser = User.Identity.Name;
 
+            //Chain-Of-Responsibility
+            CostApprover costApprover = new CostApprover(this.context, loggedOnUser);
+            if (!costApprover.canApprove(purchaseRequisitionDTO))
+            {
+                return Unauthorized(new ApprovalResult("Deficit of budget"));
+            }
+
             //Close PR
             PurchaseRequisition header = this.context.PurchaseRequisitions.Find(purchaseRequisitionDTO.Id);
             header.IsOpen = 0;
@@ -162,7 +170,7 @@ namespace ProcurementManagmentSystemAPIs.Controllers
             }
 
             this.context.SaveChanges();
-            return Ok();
+            return Ok(new ApprovalResult("Approved"));
         }
 
         private bool PurchaseRequisitionExists(int id)
