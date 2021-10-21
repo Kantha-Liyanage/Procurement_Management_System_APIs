@@ -3,6 +3,7 @@ using System.Linq;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using ProcurementManagementSystemServices.DTOs;
 using ProcurementManagementSystemServices.Models;
 
@@ -23,29 +24,39 @@ namespace ProcurementManagmentSystemAPIs.Controllers
         }
 
         // GET: api/Materials
-        [HttpGet("GetMaterialsOfCategory/{categoryId}")]
-        public ActionResult GetMaterialsOfCategory(int categoryId)
+        [HttpGet("SearchMaterialsByCategoryAndName")]
+        public ActionResult SearchMaterialsByCategoryAndName()
         {
-            List<Material> list = this.context.Materials.Where(material => material.CategoryId == categoryId).ToList<Material>();
-            List<MaterialDTO> listDTO = new List<MaterialDTO>();
-            foreach (Material mat in list)
-            {
-                MaterialDTO dto = this.mapper.Map<MaterialDTO>(mat);
-                listDTO.Add(dto);
+            int categoryId = 0;
+            if (Request.Query.ContainsKey("category")) {
+                StringValues categoryPara = "0";
+                Request.Query.TryGetValue("category", out categoryPara);
+                categoryId = int.Parse(categoryPara);
             }
 
-            return Ok(listDTO);
-        }
+            string name = "";
+            if (Request.Query.ContainsKey("name"))
+            {
+                StringValues namePara = "0";
+                Request.Query.TryGetValue("name", out namePara);
+                name = namePara;
+            }
 
-        // GET: api/Materials
-        [HttpGet("SearchMaterialsByName/{name}")]
-        public ActionResult SearchMaterialsByName(string name)
-        {
-            List<Material> list = this.context.Materials.Where(material => material.Name.Contains(name)).ToList<Material>();
+            List<Material> list = this.context.Materials.Where(material => ( material.CategoryId == categoryId && material.Name.Contains(name) ) ).ToList<Material>();
             List<MaterialDTO> listDTO = new List<MaterialDTO>();
             foreach (Material mat in list)
             {
                 MaterialDTO dto = this.mapper.Map<MaterialDTO>(mat);
+
+                MaterialCategory cat = this.context.MaterialCategories.Find(mat.CategoryId);
+                dto.CategoryName = cat.Name;
+
+                Supplier sup = this.context.Suppliers.Find(mat.SupplierId);
+                dto.SupplierName = sup.Name;
+
+                UnitOfMeasure uom = this.context.UnitOfMeasures.Find(mat.UnitOfMeasureId);
+                dto.UnitOfMeasureName = uom.Name;
+
                 listDTO.Add(dto);
             }
 
@@ -64,6 +75,15 @@ namespace ProcurementManagmentSystemAPIs.Controllers
             }
 
             MaterialDTO dto = this.mapper.Map<MaterialDTO>(material);
+
+            MaterialCategory cat = this.context.MaterialCategories.Find(material.CategoryId);
+            dto.CategoryName = cat.Name;
+
+            Supplier sup = this.context.Suppliers.Find(material.SupplierId);
+            dto.SupplierName = sup.Name;
+
+            UnitOfMeasure uom = this.context.UnitOfMeasures.Find(material.UnitOfMeasureId);
+            dto.UnitOfMeasureName = uom.Name;
 
             return Ok(dto);
         }

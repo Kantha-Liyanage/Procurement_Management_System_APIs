@@ -14,7 +14,9 @@ namespace ProcurementManagementSystemServices.Profiles
             CreateMap<MaterialCategory, MaterialCategoryDTO>();
             CreateMap<Material, MaterialDTO>();
             CreateMap<PurchaseRequisition, PurchaseRequisitionDTO>();
+            CreateMap<PurchaseRequisitionDTO,PurchaseRequisition>();
             CreateMap<PurchaseRequisitionItem, PurchaseRequisitionItemDTO>();
+            CreateMap<PurchaseRequisitionItemDTO,PurchaseRequisitionItem>();
             CreateMap<Site, SiteDTO>();
             CreateMap<SiteBudget, SiteBudgetDTO>();
             CreateMap<Supplier, SupplierDTO>();

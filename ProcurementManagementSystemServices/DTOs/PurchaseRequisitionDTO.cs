@@ -9,7 +9,7 @@ namespace ProcurementManagementSystemServices.DTOs
     {
         public PurchaseRequisitionDTO()
         {
-            this.items = new List<PurchaseRequisitionItemDTO>();
+           this.items = new List<PurchaseRequisitionItemDTO>();
         }
 
         public int Id { get; set; }
@@ -17,6 +17,9 @@ namespace ProcurementManagementSystemServices.DTOs
         public DateTime? CreatedDate { get; set; }
         public string CreatedBy { get; set; }
         public string Remarks { get; set; }
-        public List<PurchaseRequisitionItemDTO> items;
+        public string OverallStatus { get; set; }
+        public double TotalValue { get; set; }
+        public string SiteName { get; set; }
+        public List<PurchaseRequisitionItemDTO> items { get; set; }
     }
 }

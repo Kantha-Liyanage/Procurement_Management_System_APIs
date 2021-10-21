@@ -15,5 +15,8 @@ namespace ProcurementManagementSystemServices.DTOs
         public double? PriceUnit { get; set; }
         public double? UnitPrice { get; set; }
         public double? LeadTimeDays { get; set; }
+        public string? CategoryName { get; set; }
+        public string? SupplierName { get; set; }
+        public string? UnitOfMeasureName { get; set; }
     }
 }

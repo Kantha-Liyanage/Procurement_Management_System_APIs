@@ -25,7 +25,6 @@ namespace ProcurementManagementSystemServices.Models
         public virtual DbSet<MaterialCategory> MaterialCategories { get; set; }
         public virtual DbSet<PurchaseRequisition> PurchaseRequisitions { get; set; }
         public virtual DbSet<PurchaseRequisitionItem> PurchaseRequisitionItems { get; set; }
-        public virtual DbSet<PurchaseRequisitionStatus> PurchaseRequisitionStatuses { get; set; }
         public virtual DbSet<Site> Sites { get; set; }
         public virtual DbSet<SiteBudget> SiteBudgets { get; set; }
         public virtual DbSet<Supplier> Suppliers { get; set; }
@@ -317,6 +316,8 @@ namespace ProcurementManagementSystemServices.Models
 
                 entity.HasIndex(e => e.Status, "FK_purchase_requisition_item_purchase_requisition_status");
 
+                entity.HasIndex(e => e.ApprovedBy, "FK_purchase_requisition_item_user");
+
                 entity.Property(e => e.PurchaseRequisitionId)
                     .HasColumnType("int(11)")
                     .HasColumnName("purchase_requisition_id");
@@ -324,6 +325,14 @@ namespace ProcurementManagementSystemServices.Models
                 entity.Property(e => e.ItemId)
                     .HasColumnType("int(11)")
                     .HasColumnName("item_id");
+
+                entity.Property(e => e.ApprovedBy)
+                    .HasMaxLength(300)
+                    .HasColumnName("approved_by");
+
+                entity.Property(e => e.ApprovedDate)
+                    .HasColumnType("date")
+                    .HasColumnName("approved_date");
 
                 entity.Property(e => e.ApprovedQuantity).HasColumnName("approved_quantity");
 
@@ -346,8 +355,13 @@ namespace ProcurementManagementSystemServices.Models
                 entity.Property(e => e.RequiredQuantity).HasColumnName("required_quantity");
 
                 entity.Property(e => e.Status)
-                    .HasColumnType("int(11)")
+                    .HasMaxLength(50)
                     .HasColumnName("status");
+
+                entity.HasOne(d => d.ApprovedByNavigation)
+                    .WithMany(p => p.PurchaseRequisitionItems)
+                    .HasForeignKey(d => d.ApprovedBy)
+                    .HasConstraintName("FK_purchase_requisition_item_user");
 
                 entity.HasOne(d => d.Material)
                     .WithMany(p => p.PurchaseRequisitionItems)
@@ -359,28 +373,6 @@ namespace ProcurementManagementSystemServices.Models
                     .HasForeignKey(d => d.PurchaseRequisitionId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_purchase_requisition_item_purchase_requisition");
-
-                entity.HasOne(d => d.StatusNavigation)
-                    .WithMany(p => p.PurchaseRequisitionItems)
-                    .HasForeignKey(d => d.Status)
-                    .HasConstraintName("FK_purchase_requisition_item_purchase_requisition_status");
-            });
-
-            modelBuilder.Entity<PurchaseRequisitionStatus>(entity =>
-            {
-                entity.HasKey(e => e.Status)
-                    .HasName("PRIMARY");
-
-                entity.ToTable("purchase_requisition_status");
-
-                entity.Property(e => e.Status)
-                    .HasColumnType("int(11)")
-                    .ValueGeneratedNever()
-                    .HasColumnName("status");
-
-                entity.Property(e => e.Name)
-                    .HasMaxLength(50)
-                    .HasColumnName("name");
             });
 
             modelBuilder.Entity<Site>(entity =>

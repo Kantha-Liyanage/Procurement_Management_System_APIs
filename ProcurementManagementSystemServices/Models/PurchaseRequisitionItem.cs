@@ -15,10 +15,12 @@ namespace ProcurementManagementSystemServices.Models
         public DateTime? RequiredDate { get; set; }
         public DateTime? CreatedDate { get; set; }
         public string Remarks { get; set; }
-        public int? Status { get; set; }
+        public string Status { get; set; }
+        public DateTime? ApprovedDate { get; set; }
+        public string ApprovedBy { get; set; }
 
+        public virtual User ApprovedByNavigation { get; set; }
         public virtual Material Material { get; set; }
         public virtual PurchaseRequisition PurchaseRequisition { get; set; }
-        public virtual PurchaseRequisitionStatus StatusNavigation { get; set; }
     }
 }

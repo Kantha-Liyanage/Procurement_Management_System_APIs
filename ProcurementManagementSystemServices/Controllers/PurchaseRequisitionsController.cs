@@ -23,32 +23,76 @@ namespace ProcurementManagmentSystemAPIs.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet("GetPurchaseRequisitions")]
-        public ActionResult GetPurchaseRequisitionsOf()
+        [HttpPost]
+        public ActionResult PostPurchaseRequisition(PurchaseRequisitionDTO purchaseRequisitionDTO)
         {
-            string loggedOnUser = User.Identity.Name;
-            List<PurchaseRequisition> list = this.context.PurchaseRequisitions.Where(pr => pr.CreatedBy == loggedOnUser).ToList<PurchaseRequisition>();
-            List<PurchaseRequisitionDTO> listDTO = new List<PurchaseRequisitionDTO>();
-            foreach (PurchaseRequisition pr in list)
+            PurchaseRequisition purchaseRequisition = this.mapper.Map<PurchaseRequisition>(purchaseRequisitionDTO);
+            //server side values
+            purchaseRequisition.CreatedBy = User.Identity.Name;
+            purchaseRequisition.CreatedDate = System.DateTime.Today;
+            purchaseRequisition.IsOpen = 1;
+
+            foreach (PurchaseRequisitionItemDTO item in purchaseRequisitionDTO.items)
             {
-                PurchaseRequisitionDTO dto = this.mapper.Map<PurchaseRequisitionDTO>(pr);
-                listDTO.Add(dto);
+                PurchaseRequisitionItem purchaseRequisitionItem = this.mapper.Map<PurchaseRequisitionItem>(item);
+                //server side values
+                purchaseRequisitionItem.CreatedDate = System.DateTime.Today;
+                purchaseRequisition.PurchaseRequisitionItems.Add(purchaseRequisitionItem);
+                purchaseRequisitionItem.ApprovedQuantity = 0;
+                purchaseRequisitionItem.Status = "Pending";
+                item.Status = "Pending";
+
+                //Pending, Returned to Originator, Declined, Referred, Partially Approved, Approved, Placed
             }
 
-            return Ok(listDTO);
+            this.context.PurchaseRequisitions.Add(purchaseRequisition);
+            this.context.SaveChanges();
+
+            purchaseRequisitionDTO.Id = purchaseRequisition.Id;
+            purchaseRequisitionDTO.OverallStatus = "Open";
+
+            return Ok(purchaseRequisitionDTO);
         }
 
         [HttpGet("GetOpenPurchaseRequisitions")]
-        public ActionResult GetOpenPurchaseRequisitionsOf()
+        public ActionResult GetOpenPurchaseRequisitions()
         {
+            //Me
             string loggedOnUser = User.Identity.Name;
-            List<PurchaseRequisition> list = this.context.PurchaseRequisitions.Where(pr => (pr.CreatedBy == loggedOnUser && pr.IsOpen == 1)).ToList<PurchaseRequisition>();
+
+            //My sites
+            var innerJoinQuery =
+                from pr in this.context.PurchaseRequisitions
+                where pr.IsOpen == 1
+                join userSites in this.context.UserSites.Where(userSite => userSite.Username == loggedOnUser) on pr.SiteId equals userSites.Site
+                select new { pr.Id, pr.SiteId, pr.CreatedBy, pr.CreatedDate };
+
+            //Result
             List<PurchaseRequisitionDTO> listDTO = new List<PurchaseRequisitionDTO>();
-            foreach (PurchaseRequisition pr in list)
+            foreach (var row in innerJoinQuery)
             {
-                PurchaseRequisitionDTO dto = this.mapper.Map<PurchaseRequisitionDTO>(pr);
+                PurchaseRequisitionDTO dto = new PurchaseRequisitionDTO();
+                dto.Id = row.Id;
+                dto.SiteId = row.SiteId;
+                dto.CreatedBy = row.CreatedBy;
+                dto.CreatedDate = row.CreatedDate;
                 listDTO.Add(dto);
             }
+
+
+            //Site name and Total value
+            listDTO.ForEach(dto =>
+            {
+                Site site = this.context.Sites.Find(dto.SiteId);
+                dto.SiteName = site.Name;
+                List <PurchaseRequisitionItem> items = this.context.PurchaseRequisitionItems.Where(item => item.PurchaseRequisitionId == dto.Id).ToList<PurchaseRequisitionItem>();
+                items.ForEach(pri =>
+                {
+                    //Get material
+                    Material material = this.context.Materials.Find(pri.MaterialId);
+                    dto.TotalValue += (double)(pri.RequiredQuantity * material.UnitPrice);
+                });
+            });
 
             return Ok(listDTO);
         }
@@ -57,90 +101,68 @@ namespace ProcurementManagmentSystemAPIs.Controllers
         public ActionResult GetPurchaseRequisition(int id)
         {
             string loggedOnUser = User.Identity.Name;
-            PurchaseRequisition header = this.context.PurchaseRequisitions.Where( (pr => pr.Id == id && pr.CreatedBy == loggedOnUser) ).First();
+            PurchaseRequisition header = this.context.PurchaseRequisitions.Find(id);
             if (header == null)
             {
                 return NotFound();
             }
-            List<PurchaseRequisitionItem> items = this.context.PurchaseRequisitionItems.Where( item => item.PurchaseRequisitionId == header.Id).ToList<PurchaseRequisitionItem>();
+            List<PurchaseRequisitionItem> items = this.context.PurchaseRequisitionItems.Where(item => item.PurchaseRequisitionId == header.Id).ToList<PurchaseRequisitionItem>();
 
             PurchaseRequisitionDTO headerDTO = this.mapper.Map<PurchaseRequisitionDTO>(header);
-            foreach (PurchaseRequisitionItem item in items) {
+            foreach (PurchaseRequisitionItem item in items)
+            {
                 PurchaseRequisitionItemDTO dto = this.mapper.Map<PurchaseRequisitionItemDTO>(item);
+                Material material = this.context.Materials.Find(item.MaterialId);
+                MaterialCategory category = this.context.MaterialCategories.Find(material.CategoryId);
+                UnitOfMeasure uom = this.context.UnitOfMeasures.Find(material.UnitOfMeasureId);
+                Supplier supplier = this.context.Suppliers.Find(material.SupplierId);
+
+                dto.MaterialName = material.Name;
+                dto.MaterialCategory = category.Name;
+                dto.Uom = uom.Name;
+                dto.PriceUnit = material.PriceUnit;
+                dto.UnitPrice = material.UnitPrice;
+                dto.SubTotal = dto.RequiredQuantity * dto.UnitPrice;
+                dto.SupplierName = supplier.Name;
+                dto.LeadTimeDays = (double)material.LeadTimeDays;
                 headerDTO.items.Add(dto);
             }
 
             return Ok(headerDTO);
         }
 
-        [HttpPost]
-        public ActionResult PostPurchaseRequisition(PurchaseRequisitionDTO purchaseRequisitionDTO)
+        [HttpPut("Approve")]
+        public ActionResult ApprovePurchaseRequisition(PurchaseRequisitionDTO purchaseRequisitionDTO)
         {
-            PurchaseRequisition purchaseRequisition = this.mapper.Map<PurchaseRequisition>(purchaseRequisitionDTO);
-            foreach (PurchaseRequisitionItemDTO item in purchaseRequisitionDTO.items) {
-                PurchaseRequisitionItem purchaseRequisitionItem = this.mapper.Map<PurchaseRequisitionItem>(item);
-                purchaseRequisition.PurchaseRequisitionItems.Add(purchaseRequisitionItem);
-            }
-
-            //Header
-            this.context.PurchaseRequisitions.Add(purchaseRequisition);
-            if (this.context.SaveChanges() > 0)
+            if (!PurchaseRequisitionExists(purchaseRequisitionDTO.Id))
             {
-                //Items
-                foreach (PurchaseRequisitionItem item in purchaseRequisition.PurchaseRequisitionItems) {
-                    this.context.PurchaseRequisitionItems.Add(item);
-                }
-                this.context.SaveChanges();
+                return NotFound();
             }
 
-            return CreatedAtAction("GetPurchaseRequisition", new { id = purchaseRequisition.Id }, purchaseRequisition);
-        }
-
-        [HttpDelete("{id}")]
-        public ActionResult DeletePurchaseRequisition(int id)
-        {
             string loggedOnUser = User.Identity.Name;
-            PurchaseRequisition purchaseRequisition = this.context.PurchaseRequisitions.Where( pr => pr.Id == id && pr.CreatedBy == loggedOnUser).First();
-            if (purchaseRequisition == null)
+
+            //Close PR
+            PurchaseRequisition header = this.context.PurchaseRequisitions.Find(purchaseRequisitionDTO.Id);
+            header.IsOpen = 0;
+            this.context.Entry(header).Property(prop => prop.IsOpen).IsModified = true;
+
+            //Update items.
+            List<PurchaseRequisitionItem> items = this.context.PurchaseRequisitionItems.Where(x => x.PurchaseRequisitionId == purchaseRequisitionDTO.Id).ToList<PurchaseRequisitionItem>();
+            foreach (PurchaseRequisitionItem item in items)
             {
-                return NotFound();
-            }
+                item.Status = "Approved";
+                item.ApprovedBy = loggedOnUser;
+                item.ApprovedDate = System.DateTime.Today;
+                item.ApprovedQuantity = purchaseRequisitionDTO.items.Where(x => x.ItemId == item.ItemId).First<PurchaseRequisitionItemDTO>().ApprovedQuantity;
 
-            this.context.PurchaseRequisitions.Remove(purchaseRequisition);
-            this.context.SaveChanges();
-
-            return NoContent();
-        }
-
-        [HttpPut("{id}")]
-        public ActionResult PutPurchaseRequisition(int id, PurchaseRequisitionDTO purchaseRequisitionDTO)
-        {
-            if (id != purchaseRequisitionDTO.Id)
-            {
-                return BadRequest();
-            }
-
-            if (!PurchaseRequisitionExists(id))
-            {
-                return NotFound();
-            }
-
-            PurchaseRequisition purchaseRequisition = this.mapper.Map<PurchaseRequisition>(purchaseRequisitionDTO);
-            foreach (PurchaseRequisitionItemDTO item in purchaseRequisitionDTO.items)
-            {
-                PurchaseRequisitionItem purchaseRequisitionItem = this.mapper.Map<PurchaseRequisitionItem>(item);
-                purchaseRequisition.PurchaseRequisitionItems.Add(purchaseRequisitionItem);
-            }
-
-            //Header
-            this.context.Entry(purchaseRequisition).State = EntityState.Modified;
-            //Items
-            foreach (PurchaseRequisitionItem item in purchaseRequisition.PurchaseRequisitionItems) {
-                this.context.Entry(item).State = EntityState.Modified;
+                this.context.Entry(item).Property(prop => prop.Status).IsModified = true;
+                this.context.Entry(item).Property(prop => prop.ApprovedBy).IsModified = true;
+                this.context.Entry(item).Property(prop => prop.ApprovedDate).IsModified = true;
+                this.context.Entry(item).Property(prop => prop.ApprovedQuantity).IsModified = true;
             }
 
             this.context.SaveChanges();
-            return NoContent();
+            return Ok();
         }
 
         private bool PurchaseRequisitionExists(int id)
