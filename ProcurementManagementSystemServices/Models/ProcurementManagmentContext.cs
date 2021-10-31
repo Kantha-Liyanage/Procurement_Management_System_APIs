@@ -412,35 +412,35 @@ namespace ProcurementManagementSystemServices.Models
 
             modelBuilder.Entity<SiteBudget>(entity =>
             {
-                entity.HasKey(e => new { e.SiteId, e.CostApprover })
+                entity.HasKey(e => new { e.SiteId, e.UserType })
                     .HasName("PRIMARY")
                     .HasAnnotation("MySql:IndexPrefixLength", new[] { 0, 0 });
 
                 entity.ToTable("site_budget");
 
-                entity.HasIndex(e => e.CostApprover, "FK_site_budget_user");
+                entity.HasIndex(e => e.UserType, "FK_site_budget_user_type");
 
                 entity.Property(e => e.SiteId)
                     .HasColumnType("int(11)")
-                    .HasColumnName("site_id");
+                    .HasColumnName("siteId");
 
-                entity.Property(e => e.CostApprover)
-                    .HasMaxLength(300)
-                    .HasColumnName("cost_approver");
+                entity.Property(e => e.UserType)
+                    .HasColumnType("int(11)")
+                    .HasColumnName("userType");
 
                 entity.Property(e => e.Amount).HasColumnName("amount");
-
-                entity.HasOne(d => d.CostApproverNavigation)
-                    .WithMany(p => p.SiteBudgets)
-                    .HasForeignKey(d => d.CostApprover)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK_site_budget_user");
 
                 entity.HasOne(d => d.Site)
                     .WithMany(p => p.SiteBudgets)
                     .HasForeignKey(d => d.SiteId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_site_budget_site");
+
+                entity.HasOne(d => d.UserTypeNavigation)
+                    .WithMany(p => p.SiteBudgets)
+                    .HasForeignKey(d => d.UserType)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_site_budget_user_type");
             });
 
             modelBuilder.Entity<Supplier>(entity =>

@@ -142,12 +142,35 @@ namespace ProcurementManagmentSystemAPIs.Controllers
 
             string loggedOnUser = User.Identity.Name;
 
-            //Chain-Of-Responsibility
-            CostApprover costApprover = new CostApprover(this.context, loggedOnUser);
-            if (!costApprover.canApprove(purchaseRequisitionDTO))
+            //Chain-Of-Responsibility ----------------------------------------------------------------
+            //get user entity
+            User user = this.context.Users.Where(u => u.Username == loggedOnUser).First();
+
+            //cost approver
+            CostApprover costApprover;
+            if (user.UserType == CostApprover.SITE_USER)
+            {
+                costApprover = new SiteUser();
+            }
+            else if (user.UserType == CostApprover.SITE_SUPERVISOR)
+            {
+                costApprover = new SiteSupervisor();
+            }
+            else if (user.UserType == CostApprover.SITE_MANAGER)
+            {
+                costApprover = new SiteManager();
+            }
+            else
+            {
+                return BadRequest("User not found");
+            }
+
+            if (!costApprover.canApprove(this.context, purchaseRequisitionDTO))
             {
                 return Unauthorized(new ApprovalResult("Deficit of budget"));
             }
+
+            //----------------------------------------------------------------------------------------
 
             //Close PR
             PurchaseRequisition header = this.context.PurchaseRequisitions.Find(purchaseRequisitionDTO.Id);

@@ -11,7 +11,6 @@ namespace ProcurementManagementSystemServices.Models
         {
             PurchaseRequisitionItems = new HashSet<PurchaseRequisitionItem>();
             PurchaseRequisitions = new HashSet<PurchaseRequisition>();
-            SiteBudgets = new HashSet<SiteBudget>();
             UserSites = new HashSet<UserSite>();
         }
 
@@ -24,7 +23,6 @@ namespace ProcurementManagementSystemServices.Models
         public virtual UserType UserTypeNavigation { get; set; }
         public virtual ICollection<PurchaseRequisitionItem> PurchaseRequisitionItems { get; set; }
         public virtual ICollection<PurchaseRequisition> PurchaseRequisitions { get; set; }
-        public virtual ICollection<SiteBudget> SiteBudgets { get; set; }
         public virtual ICollection<UserSite> UserSites { get; set; }
     }
 }
